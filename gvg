@@ -1,11 +1,19 @@
+import tkinter as tk
 import random
 
-def print_board(board):
-    for row in board:
-        print(" | ".join(row))
-        print("-" * 9)  # Увеличим длину разделителя, чтобы он подходил к сетке
+# окна
+root = tk.Tk()
+root.title("Крестики-нолики")
 
-def check(board):
+# Функция для отображения доски
+def print_board():
+    for i in range(3):
+        for j in range(3):
+            button = board_buttons[i][j]
+            button.config(text=board[i][j], state=tk.NORMAL if board[i][j] == "" else tk.DISABLED)
+
+# Функция для проверки победы или ничьей
+def check():
     # Проверка строк
     for row in board:
         if row[0] == row[1] == row[2] and row[0] != "":
@@ -29,53 +37,69 @@ def check(board):
 
     return "Ничья"
 
-def player_move(board):
-    while True:
-        try:
-            move = int(input("Выберите клетку (1-9): ")) - 1
-            if move < 0 or move > 8:
-                print("Неверный номер клетки. Пожалуйста, выберите число от 1 до 9.")
-                continue
-            row, col = divmod(move, 3)
-            if board[row][col] == "":
-                board[row][col] = "X"
-                break
-            else:
-                print("Эта клетка уже занята. Попробуйте снова.")
-        except ValueError:
-            print("Пожалуйста, введите правильный номер клетки.")
+# Функция для обработки хода игрока
+def player_move(i, j):
+    if board[i][j] == "":
+        board[i][j] = "X"
+        print_board()
+        result = check()
+        if result != "Игра продолжается":
+            result_label.config(text=result)
+            disable_buttons()
+        else:
+            computer_move()
 
-def computer_move(board):
+# Функция для случайного хода компьютера
+def random_move():
     while True:
-        move = random.randint(0, 8)
-        row, col = divmod(move, 3)
-        if board[row][col] == "":
-            board[row][col] = "O"
-            break
+        i, j = random.randint(0, 2), random.randint(0, 2)
+        if board[i][j] == "":
+            return i, j
 
-# Главная игра
-def play_game():
+
+# Функция для хода компьютера
+def computer_move():
+ i, j = random_move()
+
+ board[i][j] = "O"
+ print_board()
+ result = check()
+ if result != "Игра продолжается":
+        result_label.config(text=result)
+        disable_buttons()
+
+# Функция для отключения всех кнопок после окончания игры
+def disable_buttons():
+    for i in range(3):
+        for j in range(3):
+            board_buttons[i][j].config(state=tk.DISABLED)
+
+# Функция для сброса игры
+def reset_game():
+    global board
     board = [["" for _ in range(3)] for _ in range(3)]
-    print("Игра началась! Вы играете за 'X', а компьютер за 'O'.")
-    while True:
-        print_board(board)
-        
-        # Ход игрока
-        player_move(board)
-        result = check(board)
-        if result != "Игра продолжается":
-            print_board(board)
-            print(result)
-            break
-        
-        # Ход компьютера
-        print("Ход компьютера...")
-        computer_move(board)
-        result = check(board)
-        if result != "Игра продолжается":
-            print_board(board)
-            print(result)
-            break
+    result_label.config(text="")
+    for i in range(3):
+        for j in range(3):
+            board_buttons[i][j].config(text="", state=tk.NORMAL)
 
-# Запуск игры
-play_game()
+# Создание игрового поля
+board = [["" for _ in range(3)] for _ in range(3)]
+board_buttons = [[None for _ in range(3)] for _ in range(3)]
+
+for i in range(3):
+    for j in range(3):
+        board_buttons[i][j] = tk.Button(root, text="", width=10, height=3, font=("Arial", 20),
+                                        command=lambda i=i, j=j: player_move(i, j))
+        board_buttons[i][j].grid(row=i, column=j)
+
+# Метка для отображения результата игры
+result_label = tk.Label(root, text="", font=("Arial", 16))
+result_label.grid(row=3, column=0, columnspan=3)
+
+# Кнопка для сброса игры
+reset_button = tk.Button(root, text="Сбросить игру", font=("Arial", 14), command=reset_game)
+reset_button.grid(row=4, column=0, columnspan=3)
+
+# Запуск интерфейса
+root.mainloop()
